@@ -44,12 +44,13 @@ loon-forge/
 
 **策略组**：select / url-test / fallback / load-balance。如果策略组使用了 `use: [provider]` + `filter`，会自动生成对应的 Loon `[Remote Filter]`。
 
-**规则**：`DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6`、`GEOIP`、`RULE-SET`（自动解析成对应的远程 URL）、`MATCH`→`FINAL`。
+**规则**：`DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-KEYWORD`、`IP-CIDR`、`IP-CIDR6`、`GEOIP`、`MATCH`→`FINAL` 进入 `[Rule]` section；`RULE-SET`（Mihomo rule-provider）自动转换为 Loon `[Remote Rule]` 格式 `URL, policy=xxx, tag=xxx, enabled=true`。
+
+**Proxy Chain**：Mihomo 节点上的 `dialer-proxy` 字段会自动生成 Loon `[Proxy Chain]` 两跳链路（`name-Chain = dialer, node, udp=true`），策略组中引用该节点的地方自动替换为 chain 名称。
 
 **明确不支持、会在预览里标注跳过的**：
 - `DOMAIN-REGEX`、逻辑规则（`AND`/`OR`/`NOT`）、`SCRIPT` 规则 —— Loon 本身没有这些能力
 - 编译过的 `.mrs` 二进制 rule-provider —— 没有 `url` 字段的无法转换
-- `behavior: classical` 的 rule-provider —— 会做但标注"请自行核实"
 - DNS（fake-ip）、TUN 等 —— Mihomo 特有机制，Loon 没有对应概念
 
 ## 环境变量
