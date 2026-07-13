@@ -1,0 +1,11 @@
+services:
+  loon-forge:
+    build: .
+    # 或者构建推送后直接用镜像:
+    # image: your-registry/loon-forge:latest
+    container_name: loon-forge
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./data:/app/data

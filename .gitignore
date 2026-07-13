@@ -1,0 +1,12 @@
+node_modules/
+data/
+*.log
+.DS_Store
+.env
+*.zip
+*.lcf
+*.conf
+*.yaml
+*.yml
+!docker-compose.yml
+!Dockerfile

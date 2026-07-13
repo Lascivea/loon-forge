@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>Loon Forge</title>
+<style>
+  :root{
+    --bg: #14171c;
+    --panel: #1b1f27;
+    --panel-line: #2a303b;
+    --ink: #e7e9ec;
+    --ink-dim: #8b93a1;
+    --ember: #d97a3f;
+    --ember-dim: #8a5636;
+    --ok: #5fb290;
+    --bad: #d16a6a;
+    --mono: "SF Mono", "JetBrains Mono", ui-monospace, Consolas, monospace;
+    --sans: "Inter", -apple-system, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); line-height:1.5;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(217,122,63,0.08), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(217,122,63,0.05), transparent 40%);
+  }
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 80px;}
+  header{margin-bottom:40px;}
+  .kicker{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ember); margin:0 0 10px;
+  }
+  h1{font-size:28px; margin:0 0 8px; font-weight:650; letter-spacing:-0.01em;}
+  header p{color:var(--ink-dim); margin:0; max-width:60ch; font-size:14.5px;}
+
+  .anvil{
+    display:flex; align-items:center; gap:14px; margin-top:22px; padding:14px 16px;
+    background:var(--panel); border:1px solid var(--panel-line); border-radius:10px;
+  }
+  .anvil .dot{width:8px; height:8px; border-radius:50%; background:var(--ink-dim); flex:none;}
+  .anvil.ok .dot{background:var(--ok); box-shadow:0 0 8px var(--ok);}
+  .anvil.bad .dot{background:var(--bad);}
+  .anvil code{font-family:var(--mono); font-size:12.5px; color:var(--ink-dim); word-break:break-all;}
+
+  section{
+    background:var(--panel); border:1px solid var(--panel-line); border-radius:12px;
+    padding:24px 26px; margin-bottom:20px;
+  }
+  section h2{
+    font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-dim);
+    margin:0 0 4px; font-weight:600;
+  }
+  section .sub{color:var(--ink-dim); font-size:13px; margin:0 0 18px;}
+
+  label{display:block; font-size:12.5px; color:var(--ink-dim); margin-bottom:5px;}
+  input[type=text], input[type=url], select{
+    width:100%; background:#101317; border:1px solid var(--panel-line); color:var(--ink);
+    padding:9px 11px; border-radius:7px; font-family:var(--mono); font-size:13px;
+  }
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--ember-dim); border-color:var(--ember);}
+  input::placeholder{color:#4f5869;}
+  textarea{
+    width:100%; min-height:110px; background:#101317; border:1px solid var(--panel-line);
+    color:var(--ink); padding:11px; border-radius:7px; font-family:var(--mono); font-size:12.5px;
+    line-height:1.55; resize:vertical;
+  }
+  .check{display:flex; align-items:center; gap:8px; margin-top:8px;}
+  .check input{width:auto; accent-color:var(--ember);}
+  .check label{margin:0; cursor:pointer;}
+
+  .row{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;}
+  .row > div{flex:1; min-width:180px;}
+
+  button{
+    font-family:var(--sans); font-weight:600; font-size:13px; border:none; border-radius:7px;
+    padding:9px 14px; cursor:pointer; transition:filter .15s; white-space:nowrap;
+  }
+  button.primary{background:var(--ember); color:#1a1206;}
+  button.primary:hover{filter:brightness(1.08);}
+  button.ghost{background:transparent; color:var(--ink-dim); border:1px solid var(--panel-line);}
+  button.ghost:hover{color:var(--ink); border-color:var(--ink-dim);}
+  button.danger{background:transparent; color:var(--bad); border:1px solid var(--panel-line);}
+  button.danger:hover{border-color:var(--bad);}
+  button:disabled{opacity:.5; cursor:default;}
+
+  .list{display:flex; flex-direction:column; gap:8px; margin-top:14px;}
+  .item{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    background:#101317; border:1px solid var(--panel-line); border-radius:8px;
+  }
+  .item .meta{flex:1; min-width:0;}
+  .item .name{font-weight:600; font-size:13px;}
+  .item .url{font-family:var(--mono); font-size:11.5px; color:var(--ink-dim); word-break:break-all;}
+  .toggle{
+    width:34px; height:20px; border-radius:10px; background:var(--panel-line); position:relative;
+    cursor:pointer; flex:none; transition:background .15s;
+  }
+  .toggle.on{background:var(--ember-dim);}
+  .toggle::after{
+    content:""; position:absolute; width:16px; height:16px; border-radius:50%; background:#fff;
+    top:2px; left:2px; transition:left .15s;
+  }
+  .toggle.on::after{left:16px; background:var(--ember);}
+
+  .add-form{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin-top:14px; align-items:end;}
+  .add-form .full{grid-column:1 / -1;}
+
+  section.collapsed .section-body {
+    display: none;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    cursor: pointer;
+    margin-bottom: 18px;
+  }
+  .section-header h2 {
+    margin: 0;
+  }
+  .section-header .sub {
+    margin: 4px 0 0;
+  }
+  .section-header .title-wrap {
+    flex: 1;
+  }
+  .fold-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .subscribe-box{
+    display:flex; gap:8px; align-items:center; margin-top:14px;
+    background:#101317; border:1px solid var(--panel-line); border-radius:8px; padding:10px 12px;
+  }
+  .subscribe-box code{flex:1; font-family:var(--mono); font-size:12.5px; color:var(--ok); word-break:break-all;}
+
+  pre.preview{
+    background:#0e1015; border:1px solid var(--panel-line); border-radius:8px; padding:16px;
+    font-family:var(--mono); font-size:12px; color:var(--ink-dim); max-height:420px; overflow:auto;
+    white-space:pre-wrap; word-break:break-all; margin:0;
+  }
+  .stat{display:flex; gap:18px; margin:14px 0; font-family:var(--mono); font-size:12.5px; color:var(--ink-dim);}
+  .stat b{color:var(--ink); font-weight:600;}
+  .skip-list{margin:10px 0 0; padding-left:18px; font-size:12.5px; color:var(--bad);}
+  .empty{color:var(--ink-dim); font-size:13px; padding:10px 0;}
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--panel); border:1px solid var(--ember-dim); color:var(--ink);
+    padding:10px 18px; border-radius:8px; font-size:13px; opacity:0; pointer-events:none;
+    transition:opacity .2s;
+  }
+  .toast.show{opacity:1;}
+
+  .template-tabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .template-tabs .tab{
+    background:transparent; color:var(--ink-dim); border:1px solid var(--panel-line);
+    border-radius:6px; padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer;
+  }
+  .template-tabs .tab.active{background:var(--ember); color:#1a1206; border-color:var(--ember);}
+  .template-editors{position:relative;}
+  .editor{display:none;}
+  .editor.active{display:block;}
+  .editor label{margin-bottom:6px;}
+  .fold-hint{font-size:12px; color:var(--ink-dim); margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">Loon Forge</p>
+    <h1>Mihomo 配置 → Loon 订阅链接</h1>
+    <p>填一次源、维护一份 Loon 模板，之后这条链接随时可以在 Loon 里刷新——节点规则跟着源变，插件/Rewrite/MITM 永远都在。</p>
+    <div class="anvil" id="statusBar">
+      <div class="dot"></div>
+      <code id="statusText">检查中…</code>
+    </div>
+  </header>
+
+  <section>
+    <h2>配置源</h2>
+    <p class="sub">Mihomo / Clash YAML 订阅链接，节点、策略组、规则会从这里自动转换</p>
+    <div class="row">
+      <div>
+        <label for="sourceUrl">源链接</label>
+        <input type="url" id="sourceUrl" placeholder="https://your-configflow.example.com/api/config/mihomo" />
+      </div>
+      <button class="primary" id="saveSource">保存</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>导入 Loon 配置</h2>
+    <p class="sub">粘贴完整的 Loon 配置文件（.conf / .lcf），自动提取 General、插件、Rewrite、Mitm 等模板</p>
+    <textarea id="lcfImportText" placeholder="#!name = 你的 Loon 配置&#10;[General]&#10;..." style="min-height:180px;"></textarea>
+    <div class="row" style="margin-top:10px; justify-content:flex-end;">
+      <div class="check" style="margin-right:auto;">
+        <input type="radio" name="lcfMode" value="merge" id="lcfModeMerge" checked />
+        <label for="lcfModeMerge">仅覆盖非空段落</label>
+      </div>
+      <div class="check" style="margin-right:16px;">
+        <input type="radio" name="lcfMode" value="replace" id="lcfModeReplace" />
+        <label for="lcfModeReplace">完全覆盖</label>
+      </div>
+      <button class="primary" id="importLcf">解析并导入</button>
+    </div>
+    <div id="lcfImportResult" class="hint" style="margin-top:8px; display:none;"></div>
+  </section>
+
+  <section>
+    <h2>General 常用设置</h2>
+    <p class="sub">Loon 全局参数，会从你原来的配置初始化，可直接改</p>
+    <div id="generalList" class="list"></div>
+    <div class="add-form" style="margin-top:12px;">
+      <input type="text" id="newGeneralKey" placeholder="参数名，如 wifi-access-http-port" />
+      <input type="text" id="newGeneralValue" placeholder="参数值" />
+      <button class="primary" id="addGeneral">添加参数</button>
+    </div>
+    <div style="margin-top:14px; text-align:right;">
+      <button class="primary" id="saveGeneral">保存 General</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Remote Proxy</h2>
+    <p class="sub">Loon 远程节点订阅（Loon 格式），Remote Filter 会从这里过滤节点</p>
+    <div class="add-form">
+      <input type="text" data-field="name" placeholder="名称（如 sub）" />
+      <input type="url" data-field="url" placeholder="Loon 格式订阅链接" />
+      <input type="text" data-field="options" placeholder="udp=true,enabled=true" />
+      <button class="primary" data-add="remoteProxies">添加</button>
+    </div>
+    <div class="list" id="remoteProxyList"></div>
+  </section>
+
+  <section>
+    <h2>插件模板</h2>
+    <p class="sub">Loon 插件 / 模块链接，可以开关；每次生成配置都会带上</p>
+    <div class="add-form" id="pluginAddForm">
+      <input type="text" data-field="name" placeholder="名称（可选）" />
+      <input type="url" data-field="url" class="full" placeholder="插件链接 https://…" />
+      <button class="primary" id="addPlugin">添加插件</button>
+    </div>
+    <div class="list" id="pluginList"></div>
+  </section>
+
+  <section>
+    <h2>Rewrite</h2>
+    <p class="sub">URL 重写规则</p>
+    <div class="add-form">
+      <input type="text" data-field="match" placeholder="匹配正则" />
+      <select data-field="type">
+        <option value="302">302</option>
+        <option value="307">307</option>
+        <option value="reject">reject</option>
+        <option value="reject-dict">reject-dict</option>
+        <option value="reject-img">reject-img</option>
+        <option value="reject-200">reject-200</option>
+      </select>
+      <input type="text" data-field="target" placeholder="目标（reject 可留空）" />
+      <button class="primary" data-add="rewrites">添加</button>
+    </div>
+    <div class="list" id="rewriteList"></div>
+  </section>
+
+  <section>
+    <h2>Host</h2>
+    <p class="sub">本地 Host 映射</p>
+    <div class="add-form">
+      <input type="text" data-field="domain" placeholder="域名" />
+      <input type="text" data-field="ip" placeholder="IP" />
+      <button class="primary" data-add="hosts">添加</button>
+    </div>
+    <div class="list" id="hostList"></div>
+  </section>
+
+  <section>
+    <h2>Script</h2>
+    <p class="sub">脚本规则</p>
+    <div class="add-form">
+      <select data-field="type">
+        <option value="http-response">http-response</option>
+        <option value="http-request">http-request</option>
+        <option value="cron">cron</option>
+      </select>
+      <input type="text" data-field="match" placeholder="匹配" />
+      <input type="url" data-field="scriptPath" placeholder="脚本链接" class="full" />
+      <div class="check"><input type="checkbox" data-field="requiresBody" /><label>requires-body</label></div>
+      <button class="primary" data-add="scripts">添加</button>
+    </div>
+    <div class="list" id="scriptList"></div>
+  </section>
+
+  <section>
+    <h2>Mitm</h2>
+    <p class="sub">HTTPS 解密配置</p>
+    <div style="margin-bottom:10px;">
+      <label>ca-p12 证书内容（Base64）</label>
+      <textarea id="mitm-ca-p12" placeholder="MII..." style="min-height:80px;font-size:11px;"></textarea>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label>hostname 列表（每行一个域名）</label>
+      <textarea id="mitm-hostname" placeholder="google.cn&#10;www.google.cn"></textarea>
+    </div>
+    <div class="row">
+      <div><label>ca-passphrase</label><input type="text" id="mitm-ca-passphrase" placeholder="留空则不输出" /></div>
+      <div class="check" style="padding-bottom:9px;"><input type="checkbox" id="mitm-skip-verify" /><label>skip-server-cert-verify</label></div>
+    </div>
+    <div style="margin-top:14px; text-align:right;">
+      <button class="primary" id="saveMitm">保存 Mitm</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>补充 Remote Rule</h2>
+    <p class="sub">Mihomo 源里没有、但 Loon 需要的规则集（比如 TikTok），会追加在 [Rule] 之后</p>
+    <div class="add-form">
+      <input type="url" data-field="url" placeholder="规则集链接" />
+      <input type="text" data-field="policy" placeholder="策略，如 USA-Auto" />
+      <input type="text" data-field="tag" placeholder="标签（可选）" />
+      <button class="primary" data-add="remoteRules">添加</button>
+    </div>
+    <div class="list" id="remoteRuleList"></div>
+  </section>
+
+  <section>
+    <h2>订阅链接</h2>
+    <p class="sub">把这条链接加到 Loon 的「配置」里，以后随便换源、加插件都不用重新导入</p>
+    <div class="subscribe-box">
+      <code id="subscribeUrl">—</code>
+      <button class="ghost" id="copySubscribe">复制</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>配置文件编辑器</h2>
+    <p class="sub">直接编辑完整的 Loon 配置文件，保存后会同步到上方各个表单</p>
+    <textarea id="lcfEditor" style="min-height:300px;font-size:11px;" placeholder="#!name = ..."></textarea>
+    <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="ghost" id="reloadLcf">重新加载当前配置</button>
+      <button class="primary" id="saveLcf">保存配置</button>
+    </div>
+    <div id="lcfSaveResult" class="hint" style="margin-top:8px;display:none;"></div>
+  </section>
+
+  <section>
+    <h2>预览</h2>
+    <p class="sub">拉取源并转换一次，检查有没有被跳过的节点/规则</p>
+    <button class="ghost" id="refreshPreview">重新拉取并预览</button>
+    <div class="stat" id="statLine" style="display:none;"></div>
+    <ul class="skip-list" id="skipList" style="display:none;"></ul>
+    <pre class="preview" id="previewBox" style="display:none;"></pre>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id)
+const toast = (msg) => {
+  const t = $('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 1800)
+}
+
+let currentSettings = {}
+
+function initCollapsible() {
+  document.querySelectorAll('section').forEach(sec => {
+    if (sec.querySelector('.section-header')) return
+    const h2 = sec.querySelector('h2')
+    const sub = sec.querySelector('.sub')
+    const header = document.createElement('div')
+    header.className = 'section-header'
+    const titleWrap = document.createElement('div')
+    titleWrap.className = 'title-wrap'
+    if (h2) titleWrap.appendChild(h2)
+    if (sub) titleWrap.appendChild(sub)
+    header.appendChild(titleWrap)
+
+    const btn = document.createElement('button')
+    btn.className = 'fold-btn ghost'
+    btn.textContent = '收起'
+    header.appendChild(btn)
+
+    const body = document.createElement('div')
+    body.className = 'section-body'
+
+    sec.insertBefore(header, sec.firstChild)
+    while (sec.children.length > 1) {
+      body.appendChild(sec.children[1])
+    }
+    sec.appendChild(body)
+
+    header.addEventListener('click', (e) => {
+      if (e.target === btn || e.target.closest('.fold-btn')) {
+        const collapsed = sec.classList.toggle('collapsed')
+        btn.textContent = collapsed ? '展开' : '收起'
+      }
+    })
+  })
+}
+
+async function loadSettings() {
+  try {
+    const s = await fetch('/api/settings').then(r => r.json())
+    currentSettings = s
+    $('sourceUrl').value = s.sourceUrl || ''
+    $('subscribeUrl').textContent = location.origin + '/loon.conf'
+    fillGeneral(s.general || {})
+    fillMitm(s.mitm || {})
+    renderPlugins(s.plugins || [])
+    renderList('remoteProxies', s.remoteProxies || [], renderRemoteProxyItem, 'remoteProxyList')
+    renderList('hosts', s.hosts || [], renderHostItem, 'hostList')
+    renderList('rewrites', s.rewrites || [], renderRewriteItem, 'rewriteList')
+    renderList('scripts', s.scripts || [], renderScriptItem, 'scriptList')
+    renderList('remoteRules', s.remoteRules || [], renderRemoteRuleItem, 'remoteRuleList')
+    updateStatus(s)
+  } catch (e) {
+    console.error('loadSettings failed', e)
+    toast('加载设置失败: ' + e.message)
+  }
+}
+
+function updateStatus(s) {
+  const bar = $('statusBar')
+  const txt = $('statusText')
+  if (!s.sourceUrl) {
+    bar.className = 'anvil bad'
+    txt.textContent = '还没配置源链接 — 先在上方填一个'
+  } else {
+    bar.className = 'anvil ok'
+    const enabledPlugins = (s.plugins || []).filter(p => p.enabled !== false).length
+    txt.textContent = `源已配置 · ${enabledPlugins} 个插件启用中 · ${(s.rewrites || []).length} 条 rewrite · 订阅链接已就绪`
+  }
+}
+
+function fillMitm(m) {
+  $('mitm-ca-p12').value = m.caP12 || ''
+  $('mitm-hostname').value = (m.hostname || []).join('\n')
+  $('mitm-ca-passphrase').value = m.caPassphrase || ''
+  $('mitm-skip-verify').checked = !!m.skipServerCertVerify
+}
+
+function collectMitm() {
+  return {
+    caP12: $('mitm-ca-p12').value.trim(),
+    hostname: $('mitm-hostname').value.split('\n').map(x => x.trim()).filter(Boolean),
+    caPassphrase: $('mitm-ca-passphrase').value.trim(),
+    skipServerCertVerify: $('mitm-skip-verify').checked,
+  }
+}
+
+function renderGeneralList(general) {
+  const box = $('generalList')
+  box.innerHTML = ''
+  if (!Object.keys(general).length) { box.innerHTML = '<div class="empty">还没有 General 参数</div>'; return }
+  for (const [key, value] of Object.entries(general)) {
+    const row = document.createElement('div')
+    row.className = 'item'
+    const isBool = typeof value === 'boolean'
+    row.innerHTML = `
+      <div style="flex:0 0 180px;">
+        <input type="text" value="${escapeHtml(key)}" data-general-key-old="${escapeHtml(key)}" style="font-family:var(--mono);font-weight:600;background:transparent;border:none;padding:0;color:var(--ink);width:100%;" />
+      </div>
+      <div style="flex:1;">
+        ${isBool
+          ? `<div class="check"><input type="checkbox" ${value ? 'checked' : ''} data-general-bool="${escapeHtml(key)}" /><label>${value ? 'true' : 'false'}</label></div>`
+          : `<input type="text" value="${escapeHtml(String(value))}" data-general-val="${escapeHtml(key)}" style="width:100%;" />`
+        }
+      </div>
+      <button class="danger" data-del-general="${escapeHtml(key)}">删除</button>
+    `
+    box.appendChild(row)
+  }
+}
+
+function collectGeneral() {
+  const general = {}
+  const box = $('generalList')
+  box.querySelectorAll('.item').forEach(row => {
+    const keyInput = row.querySelector('[data-general-key-old]')
+    const valInput = row.querySelector('[data-general-val]')
+    const boolInput = row.querySelector('[data-general-bool]')
+    const key = keyInput.value.trim()
+    if (!key) return
+    if (boolInput) {
+      general[key] = boolInput.checked
+    } else if (valInput) {
+      const v = valInput.value.trim()
+      if (v.toLowerCase() === 'true') general[key] = true
+      else if (v.toLowerCase() === 'false') general[key] = false
+      else {
+        const num = Number(v)
+        general[key] = (!Number.isNaN(num) && String(num) === v && !v.includes('.')) ? num : v
+      }
+    }
+  })
+  return general
+}
+
+function fillGeneral(g) {
+  renderGeneralList(g)
+}
+
+function renderPlugins(plugins) {
+  const box = $('pluginList')
+  box.innerHTML = ''
+  if (!plugins.length) { box.innerHTML = '<div class="empty">还没有添加插件模板</div>'; return }
+  for (const p of plugins) {
+    const row = document.createElement('div')
+    row.className = 'item'
+    row.style.alignItems = 'flex-start'
+    const pluginName = p.meta && p.meta.name ? p.meta.name : (p.name || p.url)
+    const desc = p.meta && p.meta.desc ? p.meta.desc : ''
+    const author = p.meta && p.meta.author ? p.meta.author : ''
+    row.innerHTML = `
+      <div class="toggle ${p.enabled !== false ? 'on' : ''}" data-id="${p.id}" data-type="plugin"></div>
+      <div class="meta" style="flex:1;min-width:0;">
+        <div class="name" style="font-weight:600;font-size:13.5px;">${escapeHtml(pluginName)}</div>
+        ${desc ? `<div class="url" style="margin-top:2px;">${escapeHtml(desc)}</div>` : ''}
+        ${author ? `<div class="url" style="font-size:11px;">作者: ${escapeHtml(author)}</div>` : ''}
+        <div class="url" style="margin-top:2px;">${escapeHtml(p.url)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button class="ghost" data-refresh-meta="${p.id}" style="padding:4px 8px;font-size:12px;" title="刷新插件信息">刷新</button>
+        <button class="danger" data-del="${p.id}" data-type="plugin" style="padding:4px 8px;font-size:12px;">删除</button>
+      </div>
+    `
+    box.appendChild(row)
+  }
+}
+
+function renderList(key, items, renderItem, boxId) {
+  const box = $(boxId || key + 'List')
+  if (!box) { console.error('list box not found:', boxId || key + 'List'); return }
+  box.innerHTML = ''
+  if (!items.length) { box.innerHTML = '<div class="empty">还没有添加</div>'; return }
+  for (const it of items) {
+    const row = document.createElement('div')
+    row.className = 'item'
+    row.innerHTML = renderItem(it)
+    box.appendChild(row)
+  }
+}
+
+function renderRewriteItem(r) {
+  return `
+    <div class="meta">
+      <div class="name">${escapeHtml(r.match)}</div>
+      <div class="url">${escapeHtml(r.type)} ${escapeHtml(r.target || '')}</div>
+    </div>
+    <button class="danger" data-del="${r.id}" data-type="rewrites">删除</button>
+  `
+}
+
+function renderRemoteProxyItem(p) {
+  return `
+    <div class="meta">
+      <div class="name">${escapeHtml(p.name || 'sub')}</div>
+      <div class="url">${escapeHtml(p.url)}${p.options ? ' · ' + escapeHtml(p.options) : ''}</div>
+    </div>
+    <button class="danger" data-del="${p.id}" data-type="remoteProxies">删除</button>
+  `
+}
+
+function renderHostItem(h) {
+  return `
+    <div class="meta">
+      <div class="name">${escapeHtml(h.domain)}</div>
+      <div class="url">${escapeHtml(h.ip)}</div>
+    </div>
+    <button class="danger" data-del="${h.id}" data-type="hosts">删除</button>
+  `
+}
+
+function renderScriptItem(s) {
+  return `
+    <div class="meta">
+      <div class="name">${escapeHtml(s.type)} ${escapeHtml(s.match)}</div>
+      <div class="url">${escapeHtml(s.scriptPath)}${s.requiresBody ? ' · requires-body' : ''}</div>
+    </div>
+    <button class="danger" data-del="${s.id}" data-type="scripts">删除</button>
+  `
+}
+
+function renderRemoteRuleItem(r) {
+  return `
+    <div class="meta">
+      <div class="name">${escapeHtml(r.tag || r.policy)}</div>
+      <div class="url">${escapeHtml(r.url)}</div>
+    </div>
+    <span class="badge">${escapeHtml(r.policy)}</span>
+    <button class="danger" data-del="${r.id}" data-type="remoteRules">删除</button>
+  `
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+}
+
+// ---- Source ----
+$('saveSource').addEventListener('click', async () => {
+  await fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ sourceUrl: $('sourceUrl').value.trim() })
+  })
+  toast('已保存')
+  loadSettings()
+})
+
+// ---- Plugins ----
+$('addPlugin').addEventListener('click', async () => {
+  const form = $('pluginAddForm')
+  const url = form.querySelector('[data-field="url"]').value.trim()
+  const name = form.querySelector('[data-field="name"]').value.trim()
+  if (!url) { toast('请填插件链接'); return }
+  await fetch('/api/plugins', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ url, name })
+  })
+  form.querySelector('[data-field="url"]').value = ''
+  form.querySelector('[data-field="name"]').value = ''
+  toast('已添加')
+  loadSettings()
+})
+
+// ---- Generic add ----
+document.querySelectorAll('[data-add]').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const key = btn.dataset.add
+    const form = btn.closest('.add-form')
+    const item = {}
+    form.querySelectorAll('[data-field]').forEach(el => {
+      const k = el.dataset.field
+      if (el.type === 'checkbox') item[k] = el.checked
+      else item[k] = el.value.trim()
+    })
+    try {
+      await fetch('/api/' + key, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(item)
+      })
+      form.querySelectorAll('input, select').forEach(el => { if (el.type !== 'checkbox') el.value = ''; else el.checked = false })
+      toast('已添加')
+      loadSettings()
+    } catch (e) {
+      toast('添加失败')
+    }
+  })
+})
+
+// ---- Delete / Toggle ----
+document.addEventListener('click', async (e) => {
+  const del = e.target.closest('[data-del]')
+  if (del) {
+    await fetch('/api/' + del.dataset.type + '/' + del.dataset.del, { method: 'DELETE' })
+    toast('已删除')
+    loadSettings()
+    return
+  }
+  const toggle = e.target.closest('.toggle')
+  if (toggle && toggle.dataset.type === 'plugin') {
+    const enabled = !toggle.classList.contains('on')
+    await fetch('/api/plugins/' + toggle.dataset.id, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ enabled })
+    })
+    loadSettings()
+    return
+  }
+  const refresh = e.target.closest('[data-refresh-meta]')
+  if (refresh) {
+    refresh.disabled = true
+    refresh.textContent = '...'
+    try {
+      await fetch('/api/plugins/' + refresh.dataset.refreshMeta, {
+        method: 'PATCH', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ url: currentSettings.plugins.find(p => p.id === refresh.dataset.refreshMeta).url })
+      })
+      toast('已刷新')
+      loadSettings()
+    } catch (e) {
+      toast('刷新失败')
+    } finally {
+      refresh.disabled = false
+      refresh.textContent = '刷新'
+    }
+  }
+})
+
+// ---- Plugin inline edit ----
+document.addEventListener('change', async (e) => {
+  if (e.target.dataset.editName) {
+    await fetch('/api/plugins/' + e.target.dataset.editName, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name: e.target.value })
+    })
+    toast('已更新')
+  }
+})
+
+// ---- Mitm / General ----
+$('saveMitm').addEventListener('click', async () => {
+  await fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ mitm: collectMitm() })
+  })
+  toast('Mitm 已保存')
+  loadSettings()
+})
+
+$('saveGeneral').addEventListener('click', async () => {
+  await fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ general: collectGeneral() })
+  })
+  toast('General 已保存')
+  loadSettings()
+})
+
+$('addGeneral').addEventListener('click', () => {
+  const key = $('newGeneralKey').value.trim()
+  const val = $('newGeneralValue').value.trim()
+  if (!key) { toast('请填参数名'); return }
+  const box = $('generalList')
+  // 如果当前是 empty 状态，清空
+  if (box.querySelector('.empty')) box.innerHTML = ''
+  const row = document.createElement('div')
+  row.className = 'item'
+  row.innerHTML = `
+    <div style="flex:0 0 180px;">
+      <input type="text" value="${escapeHtml(key)}" data-general-key-old="${escapeHtml(key)}" style="font-family:var(--mono);font-weight:600;background:transparent;border:none;padding:0;color:var(--ink);width:100%;" />
+    </div>
+    <div style="flex:1;">
+      <input type="text" value="${escapeHtml(val)}" data-general-val="${escapeHtml(key)}" style="width:100%;" />
+    </div>
+    <button class="danger" data-del-general="${escapeHtml(key)}">删除</button>
+  `
+  box.appendChild(row)
+  $('newGeneralKey').value = ''
+  $('newGeneralValue').value = ''
+})
+
+document.addEventListener('click', async (e) => {
+  const del = e.target.closest('[data-del-general]')
+  if (del) {
+    del.closest('.item').remove()
+    const box = $('generalList')
+    if (!box.querySelectorAll('.item').length) box.innerHTML = '<div class="empty">还没有 General 参数</div>'
+  }
+})
+
+// ---- Import LCF ----
+$('importLcf').addEventListener('click', async () => {
+  const text = $('lcfImportText').value.trim()
+  if (!text) { toast('请粘贴 Loon 配置文件'); return }
+  const mode = document.querySelector('input[name="lcfMode"]:checked').value
+  $('importLcf').disabled = true
+  $('importLcf').textContent = '解析中...'
+  try {
+    const r = await fetch('/api/import-lcf', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text, mode })
+    }).then(r => r.json())
+    if (r.error) { toast(r.error); return }
+    const resBox = $('lcfImportResult')
+    resBox.style.display = 'block'
+    resBox.textContent = `导入成功：General ${r.parsed.generalKeys} 项，插件 ${r.parsed.plugins} 个，Remote Proxy ${r.parsed.remoteProxies} 个，Proxy Chain ${r.parsed.proxyChains} 个，Remote Rule ${r.parsed.remoteRules} 个，Host ${r.parsed.hosts} 个，Rewrite ${r.parsed.rewrites} 条，Script ${r.parsed.scripts} 条，Mitm hostname ${r.parsed.mitmHostnames} 个`
+    toast('导入成功')
+    loadSettings()
+  } catch (e) {
+    toast('导入失败: ' + e.message)
+  } finally {
+    $('importLcf').disabled = false
+    $('importLcf').textContent = '解析并导入'
+  }
+})
+
+async function loadCurrentLcf() {
+  try {
+    const text = await fetch('/api/current-lcf').then(r => r.text())
+    $('lcfEditor').value = text
+  } catch (e) {
+    $('lcfEditor').value = '# 加载失败: ' + e.message
+  }
+}
+
+$('reloadLcf').addEventListener('click', async () => {
+  $('reloadLcf').disabled = true
+  $('reloadLcf').textContent = '加载中...'
+  await loadCurrentLcf()
+  $('reloadLcf').disabled = false
+  $('reloadLcf').textContent = '重新加载当前配置'
+  toast('已加载')
+})
+
+$('saveLcf').addEventListener('click', async () => {
+  const text = $('lcfEditor').value.trim()
+  if (!text) { toast('配置文件为空'); return }
+  $('saveLcf').disabled = true
+  $('saveLcf').textContent = '保存中...'
+  try {
+    const r = await fetch('/api/save-lcf', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text })
+    }).then(r => r.json())
+    const resBox = $('lcfSaveResult')
+    resBox.style.display = 'block'
+    if (r.error) {
+      resBox.textContent = '保存失败: ' + r.error
+      resBox.style.color = 'var(--bad)'
+    } else {
+      resBox.textContent = '保存成功，已同步到各表单'
+      resBox.style.color = 'var(--ok)'
+      toast('保存成功')
+      loadSettings()
+    }
+  } catch (e) {
+    toast('保存失败: ' + e.message)
+  } finally {
+    $('saveLcf').disabled = false
+    $('saveLcf').textContent = '保存配置'
+  }
+})
+
+// ---- Subscribe / Preview ----
+$('copySubscribe').addEventListener('click', () => {
+  navigator.clipboard.writeText($('subscribeUrl').textContent)
+  toast('已复制')
+})
+
+$('refreshPreview').addEventListener('click', async () => {
+  $('refreshPreview').disabled = true
+  $('refreshPreview').textContent = '拉取中…'
+  try {
+    const r = await fetch('/api/preview').then(r => r.json())
+    if (r.error) { toast(r.error); return }
+    $('statLine').style.display = 'flex'
+    $('statLine').innerHTML =
+      `<span><b>${r.counts.proxies}</b> 节点</span>` +
+      `<span><b>${r.counts.groups}</b> 策略组</span>` +
+      `<span><b>${r.counts.rules}</b> 规则</span>`
+    const skipped = [...r.skipped.proxies.map(x=>'节点跳过: '+x),
+                     ...r.skipped.groups.map(x=>'策略组跳过: '+x),
+                     ...r.skipped.rules.map(x=>'规则跳过: '+x)]
+    $('skipList').style.display = skipped.length ? 'block' : 'none'
+    $('skipList').innerHTML = skipped.map(x => `<li>${escapeHtml(x)}</li>`).join('')
+    $('previewBox').style.display = 'block'
+    $('previewBox').textContent = r.loonText
+  } catch (e) {
+    toast('预览失败: ' + e.message)
+  } finally {
+    $('refreshPreview').disabled = false
+    $('refreshPreview').textContent = '重新拉取并预览'
+  }
+})
+
+async function init() {
+  await loadSettings()
+  await loadCurrentLcf()
+  initCollapsible()
+}
+init()
+</script>
+</body>
+</html>

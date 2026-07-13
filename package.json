@@ -1,0 +1,14 @@
+{
+  "name": "loon-forge",
+  "version": "1.0.0",
+  "description": "Mihomo/Clash YAML -> Loon config converter with a managed plugin template, exposed as a subscribable link.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "js-yaml": "^4.1.0"
+  }
+}
