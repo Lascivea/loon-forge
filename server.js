@@ -49,7 +49,14 @@ if (!fs.existsSync(DATA_FILE)) {
 }
 
 function loadSettings() {
-  const s = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'))
+  let s
+  try {
+    s = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'))
+  } catch (e) {
+    console.error('settings.json 解析失败，重置为默认:', e.message)
+    s = JSON.parse(JSON.stringify(DEFAULT_SETTINGS))
+    saveSettings(s)
+  }
   return migrateSettings(s)
 }
 
@@ -101,8 +108,9 @@ function migrateSettings(s) {
 }
 
 function pluginsToLines(plugins) {
+  if (!Array.isArray(plugins)) return []
   return plugins
-    .filter((p) => p.enabled !== false)
+    .filter((p) => p && p.enabled !== false && p.url)
     .map((p) => {
       const name = p.name && p.name !== p.url ? p.name : null
       return name ? `${p.url}, tag=${name}, enabled=true` : `${p.url}, enabled=true`
@@ -114,13 +122,18 @@ async function fetchAndConvert(sourceUrl) {
   const res = await fetch(sourceUrl, { redirect: 'follow' })
   if (!res.ok) throw new Error(`拉取源配置失败: HTTP ${res.status}`)
   const text = await res.text()
-  const doc = yaml.load(text)
+  let doc
+  try {
+    doc = yaml.load(text)
+  } catch (e) {
+    throw new Error(`YAML 解析失败: ${e.message}`)
+  }
   if (!doc || typeof doc !== 'object') throw new Error('源配置不是合法的 YAML')
 
-  const proxies = doc.proxies || []
-  const groups = doc['proxy-groups'] || []
-  const rules = doc.rules || []
-  const ruleProviders = doc['rule-providers'] || {}
+  const proxies = Array.isArray(doc.proxies) ? doc.proxies : []
+  const groups = Array.isArray(doc['proxy-groups']) ? doc['proxy-groups'] : []
+  const rules = Array.isArray(doc.rules) ? doc.rules : []
+  const ruleProviders = (doc['rule-providers'] && typeof doc['rule-providers'] === 'object') ? doc['rule-providers'] : {}
 
   const settings = loadSettings()
   const pluginLines = pluginsToLines(settings.plugins || [])
@@ -237,6 +250,7 @@ app.post('/api/plugins', async (req, res) => {
   const { name, url } = req.body
   if (!url) return res.status(400).json({ error: 'url 必填（插件/模块的订阅链接）' })
   const settings = loadSettings()
+  if (!Array.isArray(settings.plugins)) settings.plugins = []
   const meta = await fetchPluginMeta(url)
   settings.plugins.push({
     id: makeId(),
@@ -275,7 +289,7 @@ app.delete('/api/plugins/:id', (req, res) => {
 const LIST_KEYS = ['remoteProxies', 'proxyChains', 'remoteRules', 'hosts', 'rewrites', 'scripts']
 
 function getList(settings, key) {
-  return settings[key] || []
+  return Array.isArray(settings[key]) ? settings[key] : []
 }
 
 function validateItem(key, item) {
@@ -322,7 +336,8 @@ for (const key of LIST_KEYS) {
 
   app.patch(`/api/${key}/:id`, (req, res) => {
     const settings = loadSettings()
-    const item = settings[key].find((x) => x.id === req.params.id)
+    if (!Array.isArray(settings[key])) settings[key] = []
+    const item = settings[key].find((x) => x && x.id === req.params.id)
     if (!item) return res.status(404).json({ error: 'not found' })
     for (const k of Object.keys(req.body)) {
       if (k !== 'id') item[k] = req.body[k]
@@ -333,7 +348,8 @@ for (const key of LIST_KEYS) {
 
   app.delete(`/api/${key}/:id`, (req, res) => {
     const settings = loadSettings()
-    settings[key] = settings[key].filter((x) => x.id !== req.params.id)
+    if (!Array.isArray(settings[key])) settings[key] = []
+    settings[key] = settings[key].filter((x) => x && x.id !== req.params.id)
     saveSettings(settings)
     res.json(settings[key])
   })

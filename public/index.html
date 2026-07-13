@@ -459,8 +459,9 @@ function collectMitm() {
 
 function renderGeneralList(general) {
   const box = $('generalList')
+  if (!box) return
   box.innerHTML = ''
-  if (!Object.keys(general).length) { box.innerHTML = '<div class="empty">还没有 General 参数</div>'; return }
+  if (!general || typeof general !== 'object' || !Object.keys(general).length) { box.innerHTML = '<div class="empty">还没有 General 参数</div>'; return }
   for (const [key, value] of Object.entries(general)) {
     const row = document.createElement('div')
     row.className = 'item'
@@ -511,8 +512,9 @@ function fillGeneral(g) {
 
 function renderPlugins(plugins) {
   const box = $('pluginList')
+  if (!box) return
   box.innerHTML = ''
-  if (!plugins.length) { box.innerHTML = '<div class="empty">还没有添加插件模板</div>'; return }
+  if (!Array.isArray(plugins) || !plugins.length) { box.innerHTML = '<div class="empty">还没有添加插件模板</div>'; return }
   for (const p of plugins) {
     const row = document.createElement('div')
     row.className = 'item'
@@ -541,8 +543,9 @@ function renderList(key, items, renderItem, boxId) {
   const box = $(boxId || key + 'List')
   if (!box) { console.error('list box not found:', boxId || key + 'List'); return }
   box.innerHTML = ''
-  if (!items.length) { box.innerHTML = '<div class="empty">还没有添加</div>'; return }
+  if (!Array.isArray(items) || !items.length) { box.innerHTML = '<div class="empty">还没有添加</div>'; return }
   for (const it of items) {
+    if (!it) continue
     const row = document.createElement('div')
     row.className = 'item'
     row.innerHTML = renderItem(it)
