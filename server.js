@@ -624,6 +624,9 @@ app.get('/api/preview', async (req, res) => {
 // ---- the actual link you paste into Loon as a remote config -----------------
 app.get('/loon.conf', async (req, res) => {
   const settings = loadSettings()
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+  res.set('Pragma', 'no-cache')
+  res.set('Expires', '0')
   try {
     const { loonText } = await fetchAndConvert(settings.sourceUrl)
     // 缓存最近一次成功的配置
